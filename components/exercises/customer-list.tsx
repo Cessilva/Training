@@ -728,6 +728,123 @@ function CustomerListSolution() {
   );
 }
 
+function CustomerListTracking() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tracking del Ejercicio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Pasos realizados
+            </h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>
+                <strong>useFetch</strong> para cargar datos iniciales con
+                cleanup
+              </li>
+              <li>
+                <strong>useState local</strong> (<code>currentCustomers</code>)
+                para manejar CRUD — useFetch no tiene setData
+              </li>
+              <li>
+                <strong>useEffect de sincronización</strong> — cuando{" "}
+                <code>customers</code> (del fetch) cambia, actualiza{" "}
+                <code>currentCustomers</code>
+              </li>
+              <li>
+                <strong>React Hook Form + Zod</strong> para validar el
+                formulario de agregar
+              </li>
+              <li>
+                <strong>CREATE</strong> con <code>handleSubmit(onSubmit)</code>{" "}
+                + spread: <code>[...(current ?? []), newCustomer]</code>
+              </li>
+              <li>
+                <strong>DELETE</strong> con <code>.filter()</code> +{" "}
+                <code>?? []</code> para inmutabilidad
+              </li>
+              <li>
+                <strong>EDIT</strong> con <code>.map()</code> + spread:{" "}
+                <code>{`{ ...customer, name: editName }`}</code> solo modifica
+                el que coincide
+              </li>
+              <li>
+                <strong>UI condicional</strong> con{" "}
+                <code>editingId === customer.id</code> para modo edición inline
+              </li>
+              <li>
+                <strong>Errores con espacio reservado</strong> —{" "}
+                <code>min-h-5</code> + <code>text-transparent</code> para no
+                mover el layout
+              </li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              ¿Por qué se hizo así?
+            </h4>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>
+                <strong>Estado local separado del fetch</strong> — useFetch es
+                de solo lectura. Para CRUD necesitas un estado que puedas mutar
+                (agregar/editar/eliminar)
+              </li>
+              <li>
+                <strong>useEffect para sincronizar</strong> — useState solo usa
+                el valor inicial una vez. Sin el effect, currentCustomers queda
+                en null después del fetch
+              </li>
+              <li>
+                <strong>?? [] en todas partes</strong> — ?.filter() y ?.map()
+                retornan undefined si el array es null. TypeScript no te deja
+                asignar undefined a Customer[]
+              </li>
+              <li>
+                <strong>(current ?? []) en setState callback</strong> — spread
+                de null explota. El fallback a [] lo previene
+              </li>
+              <li>
+                <strong>.map() para editar</strong> — recorre todo, solo
+                modifica el que coincide. Inmutable: retorna nuevo array sin
+                mutar el original
+              </li>
+              <li>
+                <strong>disabled={`{!isValid}`} con !</strong> — sin el ! se
+                deshabilita cuando ES válido (al revés)
+              </li>
+              <li>
+                <strong>handleSubmit(onSubmit)</strong> — RHF valida con Zod
+                antes de llamar onSubmit. No necesitas validar manualmente
+              </li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Patrones de inmutabilidad
+            </h4>
+            <div className="grid gap-2 text-sm">
+              <div className="p-2 bg-muted rounded">
+                <strong>CREATE:</strong> <code>[...array, newItem]</code>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <strong>DELETE:</strong>{" "}
+                <code>array.filter(item =&gt; item.id !== id)</code>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <strong>UPDATE:</strong>{" "}
+                <code>{`array.map(item => item.id === id ? { ...item, changes } : item)`}</code>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Componente principal del ejercicio
 export function CustomerListExercise() {
   const [activeTab, setActiveTab] = useState<ExerciseTab>("exercise");
@@ -756,6 +873,7 @@ export function CustomerListExercise() {
             exerciseContent={<CustomerListDemo />}
             hintsContent={<CustomerListHints />}
             solutionContent={<CustomerListSolution />}
+            trackingContent={<CustomerListTracking />}
           />
         </CardContent>
       </Card>

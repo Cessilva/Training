@@ -374,6 +374,120 @@ function ThemeSolution() {
   );
 }
 
+function ThemeTracking() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tracking del Ejercicio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Pasos realizados
+            </h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>
+                <strong>Script anti-FOUC</strong> en <code>lib/fouc.js</code> —
+                se ejecuta antes de React para aplicar clase dark/light al HTML
+                sin flash
+              </li>
+              <li>
+                <strong>Helpers puros</strong> en{" "}
+                <code>contexts/theme-helpers.ts</code> — getInitialTheme (lee
+                localStorage) y resolveTheme (convierte &apos;system&apos; en
+                light/dark)
+              </li>
+              <li>
+                <strong>ThemeProvider</strong> en{" "}
+                <code>contexts/theme-context.tsx</code> — Context con
+                useCallback para applyTheme y setTheme
+              </li>
+              <li>
+                <strong>Mover ThemeProvider al layout</strong> — no en page,
+                para que persista entre rutas sin re-renderizarse
+              </li>
+              <li>
+                <strong>Script en &lt;head&gt;</strong> con next/script
+                strategy=&quot;beforeInteractive&quot;
+              </li>
+              <li>
+                <strong>Listener de matchMedia</strong> — reacciona si el SO
+                cambia de tema mientras la app está abierta
+              </li>
+              <li>
+                <strong>useTheme() hook</strong> — con guard que lanza error si
+                se usa fuera del provider
+              </li>
+              <li>
+                <strong>Mounted pattern</strong> en ThemeToggle — evita
+                hydration mismatch (servidor vs cliente)
+              </li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              ¿Por qué se hizo así?
+            </h4>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>
+                <strong>Dos capas</strong> — script previene flash visual,
+                context sincroniza estado React. Sin ambos hay FOUC o
+                inconsistencia
+              </li>
+              <li>
+                <strong>Provider en layout</strong> — no se re-renderiza al
+                navegar, el tema persiste
+              </li>
+              <li>
+                <strong>useCallback</strong> — applyTheme y setTheme se pasan
+                como value del context. Sin memoizar, todos los consumidores se
+                re-renderizan en cada render del provider
+              </li>
+              <li>
+                <strong>typeof window === undefined</strong> — Next.js ejecuta
+                en servidor donde no hay localStorage ni matchMedia
+              </li>
+              <li>
+                <strong>try-catch en localStorage</strong> — puede fallar en
+                incógnito o storage deshabilitado
+              </li>
+              <li>
+                <strong>Mounted pattern</strong> — servidor renderiza
+                &apos;system&apos; (Monitor icon), cliente lee localStorage y
+                puede ser &apos;dark&apos; (Moon). Sin mounted hay hydration
+                mismatch
+              </li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Archivos involucrados
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                lib/fouc.js
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                contexts/theme-helpers.ts
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                contexts/theme-context.tsx
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                app/layout.tsx
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                app/page.tsx (ThemeToggle)
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Componente principal del ejercicio
 export function DarkThemeSwitcherExercise() {
   const [activeTab, setActiveTab] = useState<ExerciseTab>("exercise");
@@ -401,6 +515,7 @@ export function DarkThemeSwitcherExercise() {
             exerciseContent={<ThemeSwitcherDemo />}
             hintsContent={<ThemeHints />}
             solutionContent={<ThemeSolution />}
+            trackingContent={<ThemeTracking />}
           />
         </CardContent>
       </Card>

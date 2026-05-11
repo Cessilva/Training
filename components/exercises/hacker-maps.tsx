@@ -484,6 +484,120 @@ function HackerMapsSolution() {
   );
 }
 
+function HackerMapsTracking() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tracking del Ejercicio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Pasos realizados
+            </h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>
+                <strong>Custom hook useFetch</strong> con useReducer — estados
+                discriminados (idle/loading/success/error) que no pueden
+                coexistir
+              </li>
+              <li>
+                <strong>AbortController</strong> dentro del hook — cancela fetch
+                real al desmontar. Signal se pasa a la función fetch
+              </li>
+              <li>
+                <strong>cancel()</strong> en el return del useEffect — cleanup
+                que aborta la petición pendiente
+              </li>
+              <li>
+                <strong>useDeferredValue</strong> para debounce nativo — React
+                decide cuánto esperar según carga del dispositivo
+              </li>
+              <li>
+                <strong>useMemo</strong> para memoizar el filtrado — solo
+                recalcula cuando locations o searchTerm cambian
+              </li>
+              <li>
+                <strong>Filtrado multi-campo</strong> case-insensitive — busca
+                en name, country y description con toLowerCase
+              </li>
+              <li>
+                <strong>UI condicional</strong> con isLoading/isError/isSuccess
+                — spinner, alerta de error, o lista
+              </li>
+              <li>
+                <strong>Botón refresh</strong> con{" "}
+                <code>{"onClick={() => execute(...)}"}</code> — {"() =>"} evita
+                ejecución inmediata
+              </li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              ¿Por qué se hizo así?
+            </h4>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>
+                <strong>useReducer vs useState</strong> — 3 estados que dependen
+                entre sí. Con useState separados podrías tener loading=true y
+                error=&quot;algo&quot; al mismo tiempo (imposible)
+              </li>
+              <li>
+                <strong>AbortController vs ref/flag</strong> — con fetch real,
+                el signal cancela la conexión HTTP de verdad (ahorra red). La
+                flag solo ignora la respuesta
+              </li>
+              <li>
+                <strong>Hook genérico &lt;T&gt;</strong> —
+                useFetch&lt;Location[]&gt;, useFetch&lt;User&gt;, etc.
+                Reutilizable para cualquier tipo
+              </li>
+              <li>
+                <strong>Signal ignorado en mock</strong> — fetchLocations usa
+                setTimeout (no acepta signal). En producción pasarías signal a
+                fetch()
+              </li>
+              <li>
+                <strong>useDeferredValue vs setTimeout</strong> — más
+                inteligente, se adapta a la carga del dispositivo. Sin librerías
+                externas
+              </li>
+              <li>
+                <strong>onClick{`(() => execute(...))`}</strong> — sin {"() =>"}{" "}
+                se ejecuta al montar, no al hacer clic
+              </li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Herramientas usadas
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                useReducer
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                AbortController
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                useDeferredValue
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                useMemo
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">useRef</span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                useCallback
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Componente principal del ejercicio
 export function HackerMapsExercise() {
   const [activeTab, setActiveTab] = useState<ExerciseTab>("exercise");
@@ -512,6 +626,7 @@ export function HackerMapsExercise() {
             exerciseContent={<HackerMapsDemo />}
             hintsContent={<HackerMapsHints />}
             solutionContent={<HackerMapsSolution />}
+            trackingContent={<HackerMapsTracking />}
           />
         </CardContent>
       </Card>

@@ -610,6 +610,108 @@ function FlightSolution() {
   );
 }
 
+function FlightTracking() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Tracking del Ejercicio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Pasos realizados
+            </h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm">
+              <li>
+                <strong>Crear schema de Zod</strong> en archivo separado (
+                <code>lib/flightSchema.ts</code>) — validaciones individuales
+                por campo (min, max, email, enum, refine para fechas)
+              </li>
+              <li>
+                <strong>Configurar useForm</strong> con <code>zodResolver</code>{" "}
+                y <code>mode: &quot;onChange&quot;</code> para validación
+                reactiva
+              </li>
+              <li>
+                <strong>Conectar inputs</strong> con{" "}
+                <code>{`{...register("campo")}`}</code> — spread pattern
+              </li>
+              <li>
+                <strong>Mostrar errores</strong> con{" "}
+                <code>errors.campo?.message</code> y borde rojo condicional
+              </li>
+              <li>
+                <strong>Validaciones cruzadas</strong> con <code>watch</code> +{" "}
+                <code>useMemo</code> (porque Zod no ejecuta superRefine si algún
+                campo falla)
+              </li>
+              <li>
+                <strong>Botón disabled</strong> combinando{" "}
+                <code>!isValid || !!crossErrors</code>
+              </li>
+              <li>
+                <strong>Reset</strong> con <code>reset()</code> de RHF
+              </li>
+              <li>
+                <strong>onChange custom</strong> en register para toUpperCase en
+                origin/destination
+              </li>
+            </ol>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              ¿Por qué se hizo así?
+            </h4>
+            <ul className="list-disc list-inside space-y-2 text-sm">
+              <li>
+                <strong>Zod + RHF</strong> — stack estándar de la industria para
+                formularios tipados
+              </li>
+              <li>
+                <strong>Schema separado</strong> — reutilizable en
+                backend/tests, componente queda limpio
+              </li>
+              <li>
+                <strong>watch + useMemo</strong> — Zod no corre
+                refine/superRefine hasta que TODOS los campos pasen. Para
+                feedback inmediato en cruzadas, se necesita lógica manual
+              </li>
+              <li>
+                <strong>mode onChange</strong> — feedback inmediato al usuario,
+                no solo al submit
+              </li>
+              <li>
+                <strong>T00:00:00 en fechas</strong> — sin esto, new
+                Date(&quot;YYYY-MM-DD&quot;) se parsea como UTC y en GMT-6
+                parece el día anterior
+              </li>
+            </ul>
+          </div>
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm text-muted-foreground uppercase">
+              Herramientas usadas
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                react-hook-form
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                @hookform/resolvers/zod
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">zod</span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">
+                useMemo
+              </span>
+              <span className="px-2 py-1 bg-muted rounded text-xs">watch</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
@@ -641,6 +743,7 @@ export function FlightValidationExercise() {
             exerciseContent={<FlightForm />}
             hintsContent={<FlightHints />}
             solutionContent={<FlightSolution />}
+            trackingContent={<FlightTracking />}
           />
         </CardContent>
       </Card>

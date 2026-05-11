@@ -43,7 +43,7 @@ export interface FlightValidationErrors {
 
 export type Theme = "light" | "dark" | "system";
 
-export type ExerciseTab = "exercise" | "hints" | "solution";
+export type ExerciseTab = "exercise" | "hints" | "solution" | "tracking";
 
 export interface ExerciseProps {
   activeTab: ExerciseTab;
