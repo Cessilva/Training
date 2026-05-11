@@ -78,9 +78,9 @@ function FlightForm() {
     if (departureDate && returnDate) {
       const start = new Date(departureDate + "T00:00:00");
       const end = new Date(returnDate + "T00:00:00");
-      if (end <= start) {
+      if (end < start) {
         result.returnDate =
-          "La fecha de regreso debe ser posterior a la de salida";
+          "La fecha de regreso debe ser posterior o igual a la de salida";
       }
     }
 
@@ -436,6 +436,13 @@ type FlightFormValues = z.infer<typeof flightSchema>;
 function FlightForm() {
   const [submitted, setSubmitted] = useState(false);
 
+  // useForm: hook principal de React Hook Form
+  // register: conecta inputs al form ({...register('campo')})
+  // handleSubmit: envuelve onSubmit con validación (solo ejecuta si Zod pasa)
+  // watch: observa valores en tiempo real (para validaciones cruzadas)
+  // reset: limpia todos los campos a defaultValues
+  // errors: objeto con errores por campo (errors.campo?.message)
+  // isValid: true solo cuando todos los campos pasan validación
   const {
     register,
     handleSubmit,
@@ -443,8 +450,8 @@ function FlightForm() {
     reset,
     formState: { errors, isValid },
   } = useForm<FlightFormValues>({
-    resolver: zodResolver(flightSchema),
-    mode: 'onChange',
+    resolver: zodResolver(flightSchema), // Conecta Zod con RHF
+    mode: 'onChange', // Valida en cada cambio (no solo al submit)
     defaultValues: {
       passengerName: '',
       email: '',
@@ -466,6 +473,8 @@ function FlightForm() {
   const returnDate = watch('returnDate');
 
   const crossErrors = useMemo(() => {
+    // useMemo: solo recalcula cuando cambian origin, destination, departureDate o returnDate
+    // Sin useMemo, se ejecutaría en cada render aunque nada haya cambiado
     const result: { destination?: string; returnDate?: string } = {};
 
     if (
@@ -477,10 +486,12 @@ function FlightForm() {
     }
 
     if (departureDate && returnDate) {
+      // T00:00:00 fuerza parseo en zona local (sin esto, YYYY-MM-DD se parsea como UTC)
       const start = new Date(departureDate + 'T00:00:00');
       const end = new Date(returnDate + 'T00:00:00');
-      if (end <= start) {
-        result.returnDate = 'La fecha de regreso debe ser posterior a la de salida';
+      // < en vez de <= para permitir mismo día (ida y vuelta el mismo día es válido)
+      if (end < start) {
+        result.returnDate = 'La fecha de regreso debe ser posterior o igual a la de salida';
       }
     }
 
@@ -488,6 +499,7 @@ function FlightForm() {
   }, [origin, destination, departureDate, returnDate]);
 
   const onSubmit = (data: FlightFormValues) => {
+    // Bloquear submit si hay errores cruzados (segunda barrera de seguridad)
     if (crossErrors.destination || crossErrors.returnDate) return;
     console.log('✅ Form válido:', data);
     setSubmitted(true);
