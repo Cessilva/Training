@@ -17,10 +17,6 @@ import { Moon, Sun, Monitor, AlertCircle, Palette } from "lucide-react";
 import type { ExerciseTab, Theme } from "@/lib/types";
 import { useTheme } from "@/contexts/theme-context";
 
-// ============================================
-// CÓDIGO INCOMPLETO - VERSIÓN "SUCIA" PARA ARREGLAR
-// ============================================
-
 function ThemeSwitcherDemo() {
   //  Modo de uso del theme
   const { theme, setTheme } = useTheme();
@@ -31,60 +27,6 @@ function ThemeSwitcherDemo() {
 
   return (
     <div className="space-y-6">
-      {/* Preview del tema */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Vista Previa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-background border border-border">
-                <p className="text-foreground">Texto principal</p>
-                <p className="text-muted-foreground text-sm">
-                  Texto secundario
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <div
-                  className="w-8 h-8 rounded-full bg-primary"
-                  title="Primary"
-                />
-                <div
-                  className="w-8 h-8 rounded-full bg-secondary"
-                  title="Secondary"
-                />
-                <div
-                  className="w-8 h-8 rounded-full bg-accent"
-                  title="Accent"
-                />
-                <div className="w-8 h-8 rounded-full bg-muted" title="Muted" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Estado Actual</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between py-2 border-b border-border">
-              <span className="text-muted-foreground">Tema seleccionado:</span>
-              <span className="font-medium">{theme}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-border">
-              <span className="text-muted-foreground">localStorage:</span>
-              <span className="font-medium text-red-500">No implementado</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-muted-foreground">Parpadeo evitado:</span>
-              <span className="font-medium text-red-500">No</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Controles de tema */}
       <Card>
         <CardHeader>
@@ -245,11 +187,15 @@ export const clearThemeScript = \`
 
 // ─────────────────────────────────────────────
 // 2️⃣ HELPERS (contexts/theme-helpers.ts)
-// Funciones puras reutilizables
+// Funciones puras reutilizables — se importan en theme-context.tsx:
+// import { getInitialTheme, resolveTheme, STORAGE_KEY } from "./theme-helpers";
 // ─────────────────────────────────────────────
 
+// La key con la que se guarda/lee del localStorage
 export const STORAGE_KEY = 'theme-preference';
 
+// Lee qué tema eligió el usuario la última vez (o 'system' si no hay nada)
+// typeof window === 'undefined' = estamos en el servidor (Node.js), no hay localStorage
 export function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'system';
   try {
@@ -257,10 +203,14 @@ export function getInitialTheme(): Theme {
     if (stored && ['light', 'dark', 'system'].includes(stored)) {
       return stored as Theme;
     }
-  } catch {}
+  } catch {
+    // localStorage puede fallar en modo incógnito o storage deshabilitado
+  }
   return 'system';
 }
 
+// Convierte 'system' en 'light' o 'dark' real preguntando al SO
+// window.matchMedia('(prefers-color-scheme: dark)') es una API nativa del navegador
 export function resolveTheme(theme: Theme): 'light' | 'dark' {
   if (theme === 'system') {
     if (typeof window === 'undefined') return 'light';
@@ -343,8 +293,56 @@ export function useTheme() {
 // ─────────────────────────────────────────────
 
 function ThemeSwitcherDemo() {
+  // useTheme() viene del contexto — da acceso al tema actual y a la función para cambiarlo
   const { theme, setTheme } = useTheme();
-  // Listo — setTheme('dark') cambia todo: DOM + estado + localStorage
+
+  // setTheme('dark') hace todo internamente: DOM + estado React + localStorage
+  const handleThemeChange = (newTheme: Theme) => {
+    setTheme(newTheme);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Selector de tema con 3 botones */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Selector de Tema</CardTitle>
+          <CardDescription>
+            Implementa los 3 modos: Light, Dark y System
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {/* variant condicional: "default" si está activo, "outline" si no */}
+            <Button
+              variant={theme === "light" ? "default" : "outline"}
+              onClick={() => handleThemeChange("light")}
+              className="flex items-center gap-2"
+            >
+              <Sun className="w-4 h-4" />
+              Light
+            </Button>
+            <Button
+              variant={theme === "dark" ? "default" : "outline"}
+              onClick={() => handleThemeChange("dark")}
+              className="flex items-center gap-2"
+            >
+              <Moon className="w-4 h-4" />
+              Dark
+            </Button>
+            <Button
+              variant={theme === "system" ? "default" : "outline"}
+              onClick={() => handleThemeChange("system")}
+              className="flex items-center gap-2"
+            >
+              <Monitor className="w-4 h-4" />
+              System
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 // ✅ PUNTOS CLAVE:

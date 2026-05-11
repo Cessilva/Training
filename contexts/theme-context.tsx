@@ -19,11 +19,6 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // BUG: Esto causa parpadeo porque useState se ejecuta en el cliente
-  // después del render inicial
-  // const [theme, setTheme] = useState<Theme>("light");
-  // const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
-
   // ✅ SENIOR: Inicializar con función para evitar recálculos
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() =>

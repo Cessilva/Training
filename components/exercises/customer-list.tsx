@@ -425,6 +425,8 @@ const SENIOR_SOLUTION = `// ============================================
 // SOLUCIÓN: CUSTOMER LIST - CRUD Completo
 // ============================================
 
+"use client";
+
 import { useState, useEffect, useDeferredValue } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -435,10 +437,17 @@ import type { Customer } from "@/lib/types";
 
 function CustomerListDemo() {
   // ─── DATA FETCHING ───────────────────────────────────
-  const { data: customers, isLoading, isError, isSuccess, error, execute, cancel } =
-    useFetch<Customer[]>();
+  const {
+    data: customers,
+    error,
+    isLoading,
+    isError,
+    isSuccess,
+    execute,
+    cancel,
+  } = useFetch<Customer[]>();
 
-  // Estado local editable — useFetch da data de solo lectura
+  // Estado local editable — useFetch da data de solo lectura (no tiene setData)
   const [currentCustomers, setCurrentCustomers] = useState<Customer[] | null>(customers);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -461,26 +470,17 @@ function CustomerListDemo() {
   }, [customers]);
 
   // ─── FORMULARIO (React Hook Form + Zod) ──────────────
-  const { register, handleSubmit, formState: { errors, isValid } } =
-    useForm<CustomerFormValues>({
-      resolver: zodResolver(customerSchema),
-      mode: "onChange",
-      defaultValues: { customerName: "", email: "" },
-    });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerSchema),
+    mode: "onChange",
+    defaultValues: { customerName: "", email: "" },
+  });
 
   // ─── CRUD HANDLERS ───────────────────────────────────
-
-  // CREATE: handleSubmit valida con Zod antes de llamar onSubmit
-  const onSubmit = (data: CustomerFormValues) => {
-    const newCustomer: Customer = {
-      id: generateId(),
-      name: data.customerName,
-      email: data.email,
-      createdAt: new Date(),
-    };
-    // (current ?? []) porque current puede ser null al inicio
-    setCurrentCustomers((current) => [...(current ?? []), newCustomer]);
-  };
 
   // DELETE: .filter() crea nuevo array sin el elemento (inmutabilidad)
   const handleDelete = (id: string) => {
@@ -513,7 +513,7 @@ function CustomerListDemo() {
         current?.map((customer) =>
           customer.id === id
             ? { ...customer, name: editName.trim(), email: editEmail.trim() }
-            : customer  // los demás se retornan sin cambios
+            : customer // los demás se retornan sin cambios
         ) ?? [],
     );
     setEditingId(null);
@@ -521,47 +521,179 @@ function CustomerListDemo() {
     setEditEmail("");
   };
 
-  // ─── BÚSQUEDA ────────────────────────────────────────
-  // useDeferredValue = debounce nativo de React
-  const filteredCustomers = currentCustomers?.filter((customer) => {
-    return (
-      customer.name.toLowerCase().includes(deferredSearch) ||
-      customer.email.toLowerCase().includes(deferredSearch)
-    );
-  });
+  // CREATE: handleSubmit valida con Zod antes de llamar onSubmit
+  const onSubmit = (data: CustomerFormValues) => {
+    const newCustomer: Customer = {
+      id: generateId(),
+      name: data.customerName,
+      email: data.email,
+      createdAt: new Date(),
+    };
+    // (current ?? []) porque current puede ser null al inicio
+    setCurrentCustomers((current) => [...(current ?? []), newCustomer]);
+  };
+
+  // BÚSQUEDA: case-insensitive con useDeferredValue (debounce nativo)
+  const filteredCustomers: Customer[] | null | undefined =
+    currentCustomers?.filter((customer) => {
+      return (
+        customer.name.toLowerCase().includes(deferredSearch) ||
+        customer.email.toLowerCase().includes(deferredSearch)
+      );
+    });
 
   // ─── UI ──────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {/* Formulario: disabled={!isValid} — con ! para deshabilitar cuando NO es válido */}
-      <Button disabled={!isValid} onClick={handleSubmit(onSubmit)}>Agregar</Button>
-
-      {/* Errores: min-h-5 + text-transparent reserva espacio para no mover el layout */}
-      <p className={\`min-h-5 \${errors.email ? "text-red-500" : "text-transparent"}\`}>
-        {errors.email?.message}
-      </p>
-
-      {/* Lista con modo edición condicional */}
-      {filteredCustomers?.map((customer) => (
-        <Card key={customer.id}>
-          {editingId === customer.id ? (
-            // Modo edición: inputs + botones guardar/cancelar
-            <div>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} />
-              <Button onClick={() => handleEditSave(customer.id)}>✓</Button>
-              <Button onClick={handleEditCancel}>✗</Button>
+    <div className="space-y-6">
+      {/* Formulario de agregar */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Agregar Cliente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="name"
+                  placeholder="Nombre completo"
+                  {...register("customerName")}
+                  className={\`pl-10 \${errors.customerName ? "border-red-500" : ""}\`}
+                />
+              </div>
+              {/* min-h-5 + text-transparent reserva espacio para no mover el layout */}
+              <p className={\`text-sm flex items-center gap-1 min-h-5 \${errors.customerName ? "text-red-500" : "text-transparent"}\`}>
+                <AlertCircle className="w-3 h-3" />
+                {errors.customerName?.message ?? "\\u00A0"}
+              </p>
             </div>
-          ) : (
-            // Modo visualización: datos + botones editar/eliminar
-            <div>
-              <span>{customer.name}</span>
-              <Button onClick={() => handleEditStart(customer)}>✏️</Button>
-              <Button onClick={() => handleDelete(customer.id)}>🗑️</Button>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@ejemplo.com"
+                  {...register("email")}
+                  className={\`pl-10 \${errors.email ? "border-red-500" : ""}\`}
+                />
+              </div>
+              <p className={\`text-sm flex items-center gap-1 min-h-5 \${errors.email ? "text-red-500" : "text-transparent"}\`}>
+                <AlertCircle className="w-3 h-3" />
+                {errors.email?.message ?? "\\u00A0"}
+              </p>
             </div>
-          )}
-        </Card>
-      ))}
+            <div className="space-y-2">
+              <Label>&nbsp;</Label>
+              {/* disabled={!isValid} — con ! para deshabilitar cuando NO es válido */}
+              <Button disabled={!isValid} onClick={handleSubmit(onSubmit)} className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Agregar
+              </Button>
+              <p className="min-h-5">&nbsp;</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Barra de búsqueda */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar clientes por nombre o email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      {/* Estadísticas */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>
+          Mostrando {filteredCustomers?.length} de {currentCustomers?.length} clientes
+        </span>
+      </div>
+
+      {/* Lista de clientes con edición inline */}
+      {isSuccess && (
+        <div className="space-y-3">
+          {filteredCustomers?.map((customer) => (
+            <Card key={customer.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                {editingId === customer.id ? (
+                  /* Modo edición: inputs + botones guardar/cancelar */
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-primary font-medium">
+                        {editName.charAt(0).toUpperCase() || "?"}
+                      </span>
+                    </div>
+                    <div className="flex-1 grid gap-2 md:grid-cols-2">
+                      <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nombre" className="h-8" />
+                      <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="Email" type="email" className="h-8" />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditSave(customer.id)} className="text-green-500 hover:text-green-600 hover:bg-green-500/10">
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={handleEditCancel} className="text-muted-foreground hover:text-foreground">
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Modo visualización: datos + botones editar/eliminar */
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-primary font-medium">
+                          {customer.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{customer.name}</h3>
+                        <p className="text-sm text-muted-foreground">{customer.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => handleEditStart(customer)} className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10">
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(customer.id)} className="text-red-500 hover:text-red-600 hover:bg-red-500/10">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Estado vacío */}
+      {filteredCustomers?.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">
+          {searchTerm
+            ? \`No se encontraron clientes para "\${searchTerm}"\`
+            : "No hay clientes"}
+        </div>
+      )}
     </div>
   );
 }
