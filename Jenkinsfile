@@ -24,7 +24,8 @@ pipeline {
                 //sh 'echo "only-built-dependencies[]=sharp" > .npmrc'
                 
                 // Ahora sí, instalamos limpiamente
-                sh 'pnpm install --frozen-lockfile'
+                //sh 'pnpm install --frozen-lockfile'
+                sh 'pnpm install --frozen-lockfile --ignore-scripts'
             }
         }
 
