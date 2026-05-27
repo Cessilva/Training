@@ -21,7 +21,7 @@ pipeline {
         stage('📥 Install Dependencies') {
             steps {
                 // Le decimos a pnpm que permita explícitamente la compilación de sharp
-                sh 'echo "only-built-dependencies[]=sharp" > .npmrc'
+                //sh 'echo "only-built-dependencies[]=sharp" > .npmrc'
                 
                 // Ahora sí, instalamos limpiamente
                 sh 'pnpm install --frozen-lockfile'
